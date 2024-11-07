@@ -167,8 +167,8 @@ void vtkOFRenderer::updateVtkTrackModel(WorldContainer* wl) {
 	if (runLoop) {
 		if (curClock >= pastClock+CLOCKS_PER_SEC) {
 			pastClock = clock();
-			if (curTime < timeStamps.size()) curTime++;
-			if (curTime == timeStamps.size() - 1) curTime = 0;
+			if (curTime <= timeStamps.size()) curTime++;
+			if (curTime == timeStamps.size()) curTime = 0;
 		}
 	}
 }

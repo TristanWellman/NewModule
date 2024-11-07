@@ -48,7 +48,7 @@ vtkOFRenderer::vtkOFRenderer(std::string openFoamPath) : filePath(openFoamPath) 
 	std::vector<std::string> listing = getDirectoryListing(openFoamPath);
 
 	VTKASSERT(!listing.empty(),
-		"ERROR:: Failed to open OPENFOAM test case folder");
+		"ERROR:: Failed to open OPENFOAM test case folder: %s", openFoamPath.c_str());
 
 	timeStamps = getOpenFoamTimeStamps(listing);
 
@@ -106,6 +106,9 @@ int vtkOFRenderer::parseTracksFiles() {
 
 	isReady = true;
 	currentSelectedTimeStamp = timeStamps.at(0).c_str();
+#if PRELOAD_TIMESTAMPS
+	VTKLOG("INFO:: Preloading OpenFOAM timestamps is enables");
+#endif
 	return 0;
 }
 
@@ -118,7 +121,9 @@ void vtkOFRenderer::updateVtkTrackModel(WorldContainer* wl) {
 		for (i = 0; i < WOIDS.size(); i++) {
 			WO* tmp = wl->getWOByID(WOIDS.at(i));
 			wl->eraseViaWOptr(tmp);
+#if !PRELOAD_TIMESTAMPS
 			delete tmp;
+#endif
 		}
 		WOIDS.clear();
 		int i = 0;
@@ -127,18 +132,28 @@ void vtkOFRenderer::updateVtkTrackModel(WorldContainer* wl) {
 		}
 		pptr = &tracksFileData.at(i);
 		std::string point(ManagerEnvironmentConfiguration::getSMM() + "/models/planetSunR10.wrl");
-		for (i = 0; i < pptr->points.polyData.size(); i+=RENDER_RESOLUTION) {
-			WO* wo = WO::New(point, Vector(0.02, 0.02, 0.02), MESH_SHADING_TYPE::mstFLAT);
+#if !PRELOAD_TIMESTAMPS
+		for (i = 0; i < pptr->points.polyData.size(); i += RENDER_RESOLUTION) {
+			WO* wo = WO::New(point, Vector(POINT_SIZE, POINT_SIZE, POINT_SIZE), MESH_SHADING_TYPE::mstFLAT);
 			wo->setPosition(Vector(
-				pptr->points.polyData.at(i).at(0) * 80, pptr->points.polyData.at(i).at(1) * 80, pptr->points.polyData.at(i).at(2) * 80));
+				pptr->points.polyData.at(i).at(0) * POSMUL,
+				pptr->points.polyData.at(i).at(1) * POSMUL,
+				pptr->points.polyData.at(i).at(2) * POSMUL));
 			wo->renderOrderType = RENDER_ORDER_TYPE::roOPAQUE;
-			std::string id = "ball";
+			std::string id = "point";
 			wo->setLabel(id);
 			wl->push_back(wo);
 			WOIDS.push_back(wo->getID());
-		}
-	}
 
+		}
+#else 
+		for (int j = 0; j < preLoadedWOs.at(i).size(); j+=RENDER_RESOLUTION) {
+			WO* tmp = preLoadedWOs.at(i).at(j);
+			wl->push_back(tmp);
+			WOIDS.push_back(tmp->getID());
+		}
+#endif
+	}
 	pastTS = currentSelectedTimeStamp;
 }
 
@@ -151,25 +166,67 @@ WO *vtkOFRenderer::renderTimeStampTrack(WorldContainer *worldList) {
 	static const char* pastTS;
 	openFoamVtkFileData* pptr = new openFoamVtkFileData;
 
-	//if (currentSelectedTimeStamp != pastTS) {
-		int i = 0;
-		for (i = 0; i < timeStamps.size(); i++) {
-			if (timeStamps.at(i).c_str() == currentSelectedTimeStamp) break;
+	int tloc;
+	int i = 0,j;
+	for (i = 0; i < timeStamps.size(); i++) {
+		if (timeStamps.at(i).c_str() == currentSelectedTimeStamp) break;
+	}
+	pptr = &tracksFileData.at(i);
+	tloc = i;
+#if PRELOAD_TIMESTAMPS
+		preLoadedWOs = std::vector<std::vector<WO*> >{};
+		preLoadedWOs.resize(timeStamps.size());
+		for (i = 0; i < preLoadedWOs.size(); i++) {
+			pptr = &tracksFileData.at(i);
+			preLoadedWOs.at(i).resize(pptr->points.polyData.size());
 		}
-		pptr = &tracksFileData.at(i);
-	//}
-	//int i;
+		pptr = &tracksFileData.at(tloc);
+#endif
+
 	std::string point(ManagerEnvironmentConfiguration::getSMM() + "/models/planetSunR10.wrl");
 	for (i = 0; i < pptr->points.polyData.size();i+=RENDER_RESOLUTION) {
-		WO* wo = WO::New(point, Vector(0.02, 0.02, 0.02), MESH_SHADING_TYPE::mstFLAT);
+#if !PRELOAD_TIMESTAMPS
+		WO* wo = WO::New(point, Vector(POINT_SIZE, POINT_SIZE, POINT_SIZE), MESH_SHADING_TYPE::mstFLAT);
 		wo->setPosition(Vector(
-			pptr->points.polyData.at(i).at(0)*80, pptr->points.polyData.at(i).at(1)*80, pptr->points.polyData.at(i).at(2)*80));
+			pptr->points.polyData.at(i).at(0)*POSMUL, 
+			pptr->points.polyData.at(i).at(1)*POSMUL, 
+			pptr->points.polyData.at(i).at(2)*POSMUL));
 		wo->renderOrderType = RENDER_ORDER_TYPE::roOPAQUE;
-		std::string id = "ball";
+		std::string id = "point";
 		wo->setLabel(id);
 		worldList->push_back(wo);
 		WOIDS.push_back(wo->getID());
+#else 
+		preLoadedWOs.at(tloc).at(i) = WO::New(point, Vector(POINT_SIZE, POINT_SIZE, POINT_SIZE), MESH_SHADING_TYPE::mstFLAT);
+		preLoadedWOs.at(tloc).at(i)->setPosition(Vector(
+			pptr->points.polyData.at(i).at(0) * POSMUL,
+			pptr->points.polyData.at(i).at(1) * POSMUL,
+			pptr->points.polyData.at(i).at(2) * POSMUL));
+		preLoadedWOs.at(tloc).at(i)->renderOrderType = RENDER_ORDER_TYPE::roOPAQUE;
+		std::string id = "point";
+		preLoadedWOs.at(tloc).at(i)->setLabel(id);
+		worldList->push_back(preLoadedWOs.at(tloc).at(i));
+		WOIDS.push_back(preLoadedWOs.at(tloc).at(i)->getID());
+#endif
 	}
+
+// load up rest of object into memory
+#if PRELOAD_TIMESTAMPS
+	for (i=1; i < timeStamps.size();i++) {
+		pptr = &tracksFileData.at(i);
+		for (j = 0;j< pptr->points.polyData.size(); j += RENDER_RESOLUTION) {
+			preLoadedWOs.at(i).at(j) = WO::New(point, Vector(POINT_SIZE, POINT_SIZE, POINT_SIZE), MESH_SHADING_TYPE::mstFLAT);
+			preLoadedWOs.at(i).at(j)->setPosition(Vector(
+				pptr->points.polyData.at(j).at(0) * POSMUL,
+				pptr->points.polyData.at(j).at(1) * POSMUL,
+				pptr->points.polyData.at(j).at(2) * POSMUL));
+			preLoadedWOs.at(i).at(j)->renderOrderType = RENDER_ORDER_TYPE::roOPAQUE;
+			std::string id = "point";
+			preLoadedWOs.at(i).at(j)->setLabel(id);
+			//preLoadedWOs.at(i).push_back(wo);
+		}
+	}
+#endif
 
 	pastTS = currentSelectedTimeStamp;
 
@@ -187,7 +244,7 @@ void vtkOFRenderer::renderImGuivtkSettings() {
 	ImGui::SetNextWindowSize(ImVec2(400, 200));
 	if (ImGui::Begin("Vtk View", NULL)) {
 
-		ImGui::BulletText("Select a timestamp to view!");
+		ImGui::Text("Select a timestamp to view");
 		if (ImGui::BeginCombo("TimeStamps", currentSelectedTimeStamp)) {
 			for (int n = 0; n < timeStamps.size(); n++)
 			{

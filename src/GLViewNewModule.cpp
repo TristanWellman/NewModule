@@ -41,7 +41,7 @@
 
 using namespace Aftr;
 
-static vtkOFRenderer openFoamRenderer("C:/Users/wellm/Projects/pitzDailySteady/");
+static vtkOFRenderer openFoamRenderer("../pitzDailySteady/");
 
 GLViewNewModule* GLViewNewModule::New( const std::vector< std::string >& args )
 {

@@ -29,6 +29,16 @@ using namespace Aftr;
 
 // This determines how many points to skip each iteration while rendering the model to save ram and cpu/gpu usage
 #define RENDER_RESOLUTION 6
+// l,w,h size of rendered points
+#define POINT_SIZE 0.01
+// position scaling from those super tiny values
+#define POSMUL 80
+
+/* 
+*  loads all WO models for every time stamp to speed up loading time.
+*  Warning: When enabled this loads ALL objects, it WILL use a lot of RAM be carful on low-end systems.
+*/
+#define PRELOAD_TIMESTAMPS true
 
 /*The constructor NEEDS to be initialized
    BEFORE AfterBurner render loop or it'll parse all openFOAM
@@ -83,6 +93,8 @@ private:
 
 	std::vector< Vector > curVertexList;
 	std::vector< unsigned int > curIndexList;
+
+	std::vector<std::vector<WO*> > preLoadedWOs;
 
 	void parseThread(int index);
 };

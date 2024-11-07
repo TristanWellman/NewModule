@@ -34,6 +34,11 @@
 #include "AftrImGuiIncludes.h"
 #include "AftrGLRendererBase.h"
 
+#include "MGLAxes.h"
+#include "IndexedGeometryTriangles.h"
+#include "vtkOFRenderer.hpp"
+
+
 using namespace Aftr;
 
 GLViewNewModule* GLViewNewModule::New( const std::vector< std::string >& args )
@@ -173,8 +178,20 @@ void GLViewNewModule::onKeyUp( const SDL_KeyboardEvent& key )
 }
 
 
+void initVtkRenderer(vtkOFRenderer* renderer) {
+    renderer->parseTracksFiles();
+}
+
 void Aftr::GLViewNewModule::loadMap()
 {
+   
+   // open foam case directory (obviously this is different between computers)
+   /*OpenFOAM parser/renderer initialization!*/
+   static vtkOFRenderer openFoamRenderer("C:/Users/wellm/Projects/openFoam/pitzDailySteady/");
+   if(!openFoamRenderer.isReady) 
+       initVtkRenderer(&openFoamRenderer);
+
+
    this->worldLst = new WorldList(); //WorldList is a 'smart' vector that is used to store WO*'s
    this->actorLst = new WorldList();
    this->netLst = new WorldList();
@@ -240,6 +257,20 @@ void Aftr::GLViewNewModule::loadMap()
    }
 
    
+
+   /*
+   *    Render OpenFOAM vtk file. 
+   *    
+   */
+   {
+   
+       WO* ofobj = openFoamRenderer.renderTimeStampTrack();
+       worldLst->push_back(ofobj);
+
+   }
+
+
+
    //Make a Dear Im Gui instance via the WOImGui in the engine... This calls
    //the default Dear ImGui demo that shows all the features... To create your own,
    //inherit from WOImGui and override WOImGui::drawImGui_for_this_frame(...) (among any others you need).
@@ -288,15 +319,18 @@ void Aftr::GLViewNewModule::loadMap()
                   this->glRenderer->isUsingShadowMapping(false);
               }
 
+              openFoamRenderer.renderImGuivtkSettings();
           }
+
+      
 
 
       } );
 
-
-
-
    this->worldLst->push_back( gui );
+
+
+
 
    // remder spitball
    //if(spitball>0) {

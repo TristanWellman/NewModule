@@ -7,6 +7,9 @@
 #include <vector>
 #include <memory>
 #include "GLViewNewModule.h" //GLView subclass instantiated to drive this simulation
+#include "vtkOFRenderer.hpp"
+
+
 
 /**
    This creates a GLView subclass instance and begins the GLView's main loop.
@@ -19,6 +22,8 @@ int main( int argc, char* argv[] )
 {
    std::vector< std::string > args{ argv, argv + argc }; ///< Command line arguments passed via argc and argv, reserved to size of argc
    int simStatus = 0;
+
+
 
    do
    {

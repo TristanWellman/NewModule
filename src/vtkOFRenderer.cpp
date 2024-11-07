@@ -126,11 +126,11 @@ void vtkOFRenderer::updateVtkTrackModel(WorldContainer* wl) {
 			if (timeStamps.at(i).c_str() == currentSelectedTimeStamp) break;
 		}
 		pptr = &tracksFileData.at(i);
-		std::string point(ManagerEnvironmentConfiguration::getSMM() + "/models/OppenheimerBoxTimeMag10x10x10.wrl");
-		for (i = 0; i < pptr->points.polyData.size(); i++) {
-			WO* wo = WO::New(point, Vector(0.001, 0.001, 0.001), MESH_SHADING_TYPE::mstFLAT);
+		std::string point(ManagerEnvironmentConfiguration::getSMM() + "/models/planetSunR10.wrl");
+		for (i = 0; i < pptr->points.polyData.size(); i+=RENDER_RESOLUTION) {
+			WO* wo = WO::New(point, Vector(0.02, 0.02, 0.02), MESH_SHADING_TYPE::mstFLAT);
 			wo->setPosition(Vector(
-				pptr->points.polyData.at(i).at(0) * 50, pptr->points.polyData.at(i).at(1) * 50, pptr->points.polyData.at(i).at(2) * 50));
+				pptr->points.polyData.at(i).at(0) * 80, pptr->points.polyData.at(i).at(1) * 80, pptr->points.polyData.at(i).at(2) * 80));
 			wo->renderOrderType = RENDER_ORDER_TYPE::roOPAQUE;
 			std::string id = "ball";
 			wo->setLabel(id);
@@ -159,11 +159,11 @@ WO *vtkOFRenderer::renderTimeStampTrack(WorldContainer *worldList) {
 		pptr = &tracksFileData.at(i);
 	//}
 	//int i;
-	std::string point(ManagerEnvironmentConfiguration::getSMM() + "/models/OppenheimerBoxTimeMag10x10x10.wrl");
-	for (i = 0; i < pptr->points.polyData.size();i++) {
-		WO* wo = WO::New(point, Vector(0.001, 0.001, 0.001), MESH_SHADING_TYPE::mstFLAT);
+	std::string point(ManagerEnvironmentConfiguration::getSMM() + "/models/planetSunR10.wrl");
+	for (i = 0; i < pptr->points.polyData.size();i+=RENDER_RESOLUTION) {
+		WO* wo = WO::New(point, Vector(0.02, 0.02, 0.02), MESH_SHADING_TYPE::mstFLAT);
 		wo->setPosition(Vector(
-			pptr->points.polyData.at(i).at(0)*50, pptr->points.polyData.at(i).at(1)*50, pptr->points.polyData.at(i).at(2)*50));
+			pptr->points.polyData.at(i).at(0)*80, pptr->points.polyData.at(i).at(1)*80, pptr->points.polyData.at(i).at(2)*80));
 		wo->renderOrderType = RENDER_ORDER_TYPE::roOPAQUE;
 		std::string id = "ball";
 		wo->setLabel(id);

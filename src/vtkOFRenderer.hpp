@@ -27,6 +27,9 @@
 
 using namespace Aftr;
 
+// This determines how many points to skip each iteration while rendering the model to save ram and cpu/gpu usage
+#define RENDER_RESOLUTION 6
+
 /*The constructor NEEDS to be initialized
    BEFORE AfterBurner render loop or it'll parse all openFOAM
    files every frame!

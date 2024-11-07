@@ -76,6 +76,8 @@ public:
 	void renderImGuivtkSettings();
 	
 private:
+
+	bool runLoop;
 	const char* currentSelectedTimeStamp;
 
 	std::vector<int> threadStates;

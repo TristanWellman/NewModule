@@ -63,6 +63,7 @@ vtkOFRenderer::vtkOFRenderer(std::string openFoamPath) : filePath(openFoamPath) 
 		std::cout << fullPath << std::endl;
 	}
 	isReady = false; // will be ready after parser is ran
+	runLoop = false;
 }
 
 void vtkOFRenderer::parseThread(int index) {
@@ -113,9 +114,16 @@ int vtkOFRenderer::parseTracksFiles() {
 }
 
 void vtkOFRenderer::updateVtkTrackModel(WorldContainer* wl) {
+
+	static int curTime = 0;
+	static size_t pastClock = clock();
+	static size_t curClock = clock();
+
 	static const char* pastTS = currentSelectedTimeStamp;
 	openFoamVtkFileData* pptr = new openFoamVtkFileData;
 	int i = 0;
+
+	if (runLoop) currentSelectedTimeStamp = timeStamps.at(curTime).c_str();
 
 	if (currentSelectedTimeStamp != pastTS) {
 		for (i = 0; i < WOIDS.size(); i++) {
@@ -155,6 +163,14 @@ void vtkOFRenderer::updateVtkTrackModel(WorldContainer* wl) {
 #endif
 	}
 	pastTS = currentSelectedTimeStamp;
+	curClock = clock();
+	if (runLoop) {
+		if (curClock >= pastClock+CLOCKS_PER_SEC) {
+			pastClock = clock();
+			if (curTime < timeStamps.size()) curTime++;
+			if (curTime == timeStamps.size() - 1) curTime = 0;
+		}
+	}
 }
 
 WO *vtkOFRenderer::renderTimeStampTrack(WorldContainer *worldList) {
@@ -256,6 +272,9 @@ void vtkOFRenderer::renderImGuivtkSettings() {
 			}
 			ImGui::EndCombo();
 		}
+
+		ImGui::Checkbox("Play timeStamps", &runLoop);
+
 	}
 	ImGui::End();
 

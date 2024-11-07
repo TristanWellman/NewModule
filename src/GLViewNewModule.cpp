@@ -41,6 +41,8 @@
 
 using namespace Aftr;
 
+static vtkOFRenderer openFoamRenderer("C:/Users/wellm/Projects/openFoam/pitzDailySteady/");
+
 GLViewNewModule* GLViewNewModule::New( const std::vector< std::string >& args )
 {
    GLViewNewModule* glv = new GLViewNewModule( args );
@@ -107,6 +109,10 @@ void GLViewNewModule::updateWorld()
                           //this call.
    
    updateSpitball(this->getActor());
+
+   WorldContainer* wl = this->getWorldContainer();
+   //std::cout << wl->size() << std::endl;
+   openFoamRenderer.updateVtkTrackModel(wl);
 }
 
 
@@ -187,7 +193,7 @@ void Aftr::GLViewNewModule::loadMap()
    
    // open foam case directory (obviously this is different between computers)
    /*OpenFOAM parser/renderer initialization!*/
-   static vtkOFRenderer openFoamRenderer("C:/Users/wellm/Projects/openFoam/pitzDailySteady/");
+   //openFoamRenderer = vtkOFRenderer("C:/Users/wellm/Projects/openFoam/pitzDailySteady/");
    if(!openFoamRenderer.isReady) 
        initVtkRenderer(&openFoamRenderer);
 
@@ -240,7 +246,7 @@ void Aftr::GLViewNewModule::loadMap()
 
    { 
       ////Create the infinite grass plane (the floor)
-      WO* wo = WO::New( grass, Vector( 1, 1, 1 ), MESH_SHADING_TYPE::mstFLAT );
+     /* WO* wo = WO::New(grass, Vector(1, 1, 1), MESH_SHADING_TYPE::mstFLAT);
       wo->setPosition( Vector( 0, 0, 0 ) );
       wo->renderOrderType = RENDER_ORDER_TYPE::roOPAQUE;
       wo->upon_async_model_loaded( [wo]()
@@ -253,7 +259,7 @@ void Aftr::GLViewNewModule::loadMap()
             grassSkin.setSpecularCoefficient( 10 ); // How "sharp" are the specular highlights (bigger is sharper, 1000 is very sharp, 10 is very dull)
          } );
       wo->setLabel( "Grass" );
-      worldLst->push_back( wo );
+      worldLst->push_back( wo );*/
    }
 
    
@@ -264,8 +270,8 @@ void Aftr::GLViewNewModule::loadMap()
    */
    {
    
-       WO* ofobj = openFoamRenderer.renderTimeStampTrack();
-       worldLst->push_back(ofobj);
+       WO* ofobj = openFoamRenderer.renderTimeStampTrack(this->worldLst);
+       //worldLst->push_back(ofobj);
 
    }
 
